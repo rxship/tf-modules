@@ -1,0 +1,29 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files (NEVER commit these — they contain secrets)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Lock files (debatable; we'll commit this one — see note below)
+# .terraform.lock.hcl
+
+# tfvars CAN contain secrets — be careful
+# In our case dev.tfvars has subscription_id which is OK to commit,
+# but in real projects you'd often gitignore tfvars or use *.auto.tfvars
+# *.tfvars
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
