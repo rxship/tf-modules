@@ -5,10 +5,12 @@ module "rg" {
 }
 
 module "vnet" {
-  source    = "../../modules/vnet"
-  vnet_name = var.vnet_name
-  location  = var.location
-  rg_name   = module.rg.rg_name
+  source                = "../../modules/vnet"
+  vnet_name             = var.vnet_name
+  location              = var.location
+  rg_name               = module.rg.rg_name
+  address_space         = var.vnet_address_space
+  subnet_address_prefix = var.aks_subnet_address_prefix
 }
 
 module "aks" {

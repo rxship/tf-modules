@@ -38,3 +38,13 @@ variable "node_count" {
   type        = number
   default     = 1
 }
+
+variable "vnet_address_space" {
+  description = "Address space (CIDR list) for the VNet"
+  type        = list(string)
+}
+
+variable "aks_subnet_address_prefix" {
+  description = "Address prefix (CIDR list) for the AKS subnet"
+  type        = list(string)
+}
