@@ -1,0 +1,52 @@
+# Pipeline that runs Terraform commands for the dev environment.
+# Triggers on every push to any branch.
+trigger:
+  branches:
+    include:
+      - '*'
+
+# Use a Microsoft-hosted Linux agent.
+pool:
+  vmImage: 'ubuntu-latest'
+
+# Variables available to all stages.
+variables:
+  TF_VERSION: '1.9.5'
+  WORKING_DIR: 'environments/dev'
+  TFVARS_FILE: 'dev.tfvars'
+
+stages:
+  - stage: Validate
+    displayName: 'Terraform Init & Validate'
+    jobs:
+      - job: ValidateJob
+        displayName: 'Init and Validate'
+        steps:
+
+          # Step 1: Install Terraform on the agent.
+          - task: TerraformInstaller@1
+            displayName: 'Install Terraform $(TF_VERSION)'
+            inputs:
+              terraformVersion: $(TF_VERSION)
+
+          # Step 2: Run terraform init.
+          # We pass the service connection so Terraform can authenticate to Azure.
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Init'
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
+              backendServiceArm: 'azure-spn-connec'
+              backendAzureRmResourceGroupName: 'rg-tfstate-dev'
+              backendAzureRmStorageAccountName: 'tfstatedevrjp'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'dev.terraform.tfstate'
+
+          # Step 3: Run terraform validate.
+          - task: TerraformTaskV4@4
+            displayName: 'Terraform Validate'
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
