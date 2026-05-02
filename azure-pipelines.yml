@@ -1,85 +1,51 @@
 trigger:
-  branches:
-    include:
-      - '*'
+- main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: ubuntu-latest
 
 variables:
-  TF_VERSION: '1.9.5'
   WORKING_DIR: 'environments/dev'
-  TFVARS_FILE: 'dev.tfvars'
 
-stages:
-  # =====================================================
-  # STAGE 1: Init + Validate (runs on every branch push)
-  # =====================================================
-  - stage: Validate
-    displayName: 'Terraform Init & Validate'
-    jobs:
-      - job: ValidateJob
-        displayName: 'Init and Validate'
-        steps:
-          - task: TerraformInstaller@1
-            displayName: 'Install Terraform $(TF_VERSION)'
-            inputs:
-              terraformVersion: $(TF_VERSION)
+steps:
+- script: |
+    wget https://releases.hashicorp.com/terraform/1.9.5/terraform_1.9.5_linux_amd64.zip
+    unzip terraform_1.9.5_linux_amd64.zip
+    sudo mv terraform /usr/local/bin/
+    terraform -version
+  displayName: 'Install Terraform'
 
-          - task: TerraformTaskV4@4
-            displayName: 'Terraform Init'
-            inputs:
-              provider: 'azurerm'
-              command: 'init'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
-              backendServiceArm: 'azure-spn-connec'
-              backendAzureRmResourceGroupName: 'rg-tfstate-dev'
-              backendAzureRmStorageAccountName: 'tfstatedevrjp'
-              backendAzureRmContainerName: 'tfstate'
-              backendAzureRmKey: 'dev.terraform.tfstate'
+- script: |
+    cd $(WORKING_DIR)
+    terraform init
+  displayName: 'Terraform Init'
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
 
-          - task: TerraformTaskV4@4
-            displayName: 'Terraform Validate'
-            inputs:
-              provider: 'azurerm'
-              command: 'validate'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
+- script: |
+    cd $(WORKING_DIR)
+    terraform validate
+  displayName: 'Terraform Validate'
 
-  # =====================================================
-  # STAGE 2: Plan (depends on Validate, shows what would change)
-  # =====================================================
-  - stage: Plan
-    displayName: 'Terraform Plan'
-    dependsOn: Validate
-    condition: succeeded()
-    jobs:
-      - job: PlanJob
-        displayName: 'Terraform Plan'
-        steps:
-          # Re-install Terraform — each stage runs on a fresh agent.
-          - task: TerraformInstaller@1
-            displayName: 'Install Terraform $(TF_VERSION)'
-            inputs:
-              terraformVersion: $(TF_VERSION)
+- script: |
+    cd $(WORKING_DIR)
+    terraform plan -var-file=dev.tfvars
+  displayName: 'Terraform Plan'
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
 
-          # Re-init — same reason. Fresh agent has no .terraform folder.
-          - task: TerraformTaskV4@4
-            displayName: 'Terraform Init'
-            inputs:
-              provider: 'azurerm'
-              command: 'init'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
-              backendServiceArm: 'azure-spn-connec'
-              backendAzureRmResourceGroupName: 'rg-tfstate-dev'
-              backendAzureRmStorageAccountName: 'tfstatedevrjp'
-              backendAzureRmContainerName: 'tfstate'
-              backendAzureRmKey: 'dev.terraform.tfstate'
-
-          - task: TerraformTaskV4@4
-            displayName: 'Terraform Plan'
-            inputs:
-              provider: 'azurerm'
-              command: 'plan'
-              workingDirectory: '$(System.DefaultWorkingDirectory)/$(WORKING_DIR)'
-              environmentServiceNameAzureRM: 'azure-spn-connec'
-              commandOptions: '-var-file=$(TFVARS_FILE)'
+- script: |
+    cd $(WORKING_DIR)
+    terraform apply -auto-approve -var-file=dev.tfvars
+  displayName: 'Terraform Apply'
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
