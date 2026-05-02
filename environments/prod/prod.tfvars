@@ -1,0 +1,10 @@
+subscription_id            = "196fc159-c9a1-42e8-8ea4-4220e56d6ee4"
+location                   = "Canada Central"
+rg_name                    = "demo-aks-prod"
+vnet_name                  = "vnet-aks-prod"
+vnet_address_space         = ["10.20.0.0/16"]
+aks_subnet_address_prefix  = ["10.20.1.0/24"]
+cluster_name               = "aks-prod"
+dns_prefix                 = "aks-prod"
+kubernetes_version         = "1.35.1"
+node_count                 = 2
